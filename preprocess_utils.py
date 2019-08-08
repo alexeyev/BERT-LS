@@ -149,48 +149,40 @@ def convert_token_to_feature(tokens_a, mask_position, seq_length, tokenizer):
     """
         Loads a data file into a list of `InputFeature`s.
     """
+    if len(tokens_a) * 2 + 3 > seq_length:
+        print("We have to cut the sentence as it's too long (%d) for us:" % len(tokens_a), tokens_a)
+        while len(tokens_a) * 2 + 3 > seq_length:
+            tokens_a = tokens_a[:-1]
+        print("Now it is:", tokens_a)
 
-    tokens = []
-    input_type_ids = []
-
-    tokens.append("[CLS]")
-    input_type_ids.append(0)
-
-    for token in tokens_a:
-        tokens.append(token)
-        input_type_ids.append(0)
-
-    tokens.append("[SEP]")
-    input_type_ids.append(0)
-
-    for token in tokens_a:
-        tokens.append(token)
-        input_type_ids.append(1)
-
-    tokens.append("[SEP]")
-    input_type_ids.append(1)
-
-    true_word = ''
+    tokens = ["[CLS]"] + tokens_a + ["[SEP]"] + tokens_a + ["[SEP]"]
+    input_type_ids = [0] + [0] * len(tokens_a) + [0] + [1] * len(tokens_a) + [1]
+    true_word = ""
 
     if isinstance(mask_position, list):
         for pos in mask_position:
-            true_word = true_word + tokens[pos]
-            tokens[pos] = '[MASK]'
+            true_word += tokens[pos]
+            tokens[pos] = "[MASK]"
     else:
-        true_word = tokens[mask_position]
-        tokens[mask_position] = '[MASK]'
+        true_word += tokens[mask_position]
+        tokens[mask_position] = "[MASK]"
 
     input_ids = tokenizer.convert_tokens_to_ids(tokens)
 
-    # The mask has 1 for real tokens and 0 for padding tokens. Only real
-    # tokens are attended to.
+    # the mask has 1 for real tokens and 0 for padding tokens
+    # only real tokens are attended to
     input_mask = [1] * len(input_ids)
 
-    # Zero-pad up to the sequence length.
+    # zero-pad up to the sequence length
     while len(input_ids) < seq_length:
         input_ids.append(0)
         input_mask.append(0)
         input_type_ids.append(0)
+
+    print()
+    print(len(input_ids), input_ids)
+    print(len(input_mask), input_mask)
+    print(len(input_type_ids), input_type_ids)
 
     assert len(input_ids) == seq_length
     assert len(input_mask) == seq_length

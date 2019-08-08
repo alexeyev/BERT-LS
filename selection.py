@@ -51,7 +51,7 @@ def substitution_selection(source_word, pre_tokens, stemmer, num_selection=10):
     return cur_tokens
 
 
-def get_score(sentence, tokenizer, masked_lm, device="cpu"):
+def get_score(sentence, tokenizer, masked_lm, device):
     """
         Replacing every token with a MASK and computing masked LM scores
     """
@@ -77,7 +77,7 @@ def get_score(sentence, tokenizer, masked_lm, device="cpu"):
     return np.exp(sentence_loss / len(tokenize_input))
 
 
-def lm_score(source_word, source_context, substitution_selection, tokenizer, masked_lm):
+def lm_score(source_word, source_context, substitution_selection, tokenizer, masked_lm, device):
 
     source_sentence = " ".join(source_context)
     lm_scores = []
@@ -88,7 +88,7 @@ def lm_score(source_word, source_context, substitution_selection, tokenizer, mas
         sub_sentence = source_sentence.replace(source_word, substibution)
 
         # evaluating the score with the language model
-        score = get_score(sub_sentence, tokenizer, masked_lm)
+        score = get_score(sub_sentence, tokenizer, masked_lm, device)
 
         lm_scores.append(score)
 

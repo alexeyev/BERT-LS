@@ -5,18 +5,16 @@ def get_word_count(word_count_path):
 
     word2count = {}
 
-    with open(word_count_path, 'r') as f:
+    with open(word_count_path, "r") as f:
 
-        for i in f:
-            i = i.strip()
+        for line in f:
+            line = line.strip()
 
-            if len(i) > 0:
-                i = i.split()
+            if len(line) > 0:
+                splitted = line.split()
 
-                if len(i) == 2:
-                    word2count[i[0]] = float(i[1])
-                else:
-                    print(i)
+                if len(splitted) == 2:
+                    word2count[splitted[0]] = float(splitted[1])
 
     return word2count
 

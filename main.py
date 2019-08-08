@@ -21,7 +21,8 @@ from selection import substitution_selection, lm_score
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEVICE = "cpu"
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Using device:', DEVICE)
 
 
 def preprocess_SR(source_word, substitution_selection, fasttext_dico, fasttext_emb, word_count):
@@ -103,7 +104,7 @@ def substitution_ranking(source_word, source_context, substitution_selection, fa
     rank_count = sorted(count_scores, reverse=True)
     count_rank = [rank_count.index(v) + 1 for v in count_scores]
 
-    lm_scores = lm_score(source_word, source_context, ss, tokenizer, masked_lm)
+    lm_scores = lm_score(source_word, source_context, ss, tokenizer, masked_lm, DEVICE)
     rank_lm = sorted(lm_scores)
     lm_rank = [rank_lm.index(v) + 1 for v in lm_scores]
     bert_rank = []
@@ -185,7 +186,7 @@ def main():
     # parser.add_argument("--no_cuda", action='store_true', help="Whether not to use CUDA when available")
     parser.add_argument("--local_rank", type=int, default=-1, help="local_rank for distributed training on gpus")
     parser.add_argument('--seed', type=int, default=42, help="random seed for initialization")
-    # parser.add_argument('--fp16', action='store_true', help="Whether to use 16-bit float precision instead of 32-bit")
+    parser.add_argument('--fp16', default=True, action='store_true', help="Whether to use 16-bit float precision instead of 32-bit")
     # parser.add_argument('--loss_scale', type=float, default=0,
     #                     help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
     #                          "0 (default value): dynamic loss scaling.\n"
@@ -216,9 +217,9 @@ def main():
 
     pretrained_bert_model = BertForMaskedLM.from_pretrained(args.bert_model, cache_dir=cache_dir)
 
-    # if args.fp16:
-    #     pretrained_bert_model.half()
-    pretrained_bert_model.to("cpu")
+    if args.fp16:
+        pretrained_bert_model.half()
+    pretrained_bert_model.to(DEVICE)
 
     output_sr_file = open(args.output_SR_file, "a+")
 
@@ -230,7 +231,7 @@ def main():
     word_count_path = args.word_frequency
     word_count = get_word_count(word_count_path)
 
-    ps = PorterStemmer()
+    stemmer_for_matching = PorterStemmer()
 
     SS = []
     substitution_words = []
@@ -291,7 +292,7 @@ def main():
             pre_tokens = tokenizer.convert_ids_to_tokens(predicted_top[1].cpu().numpy())
 
             ss = substitution_selection(mask_words[i], pre_tokens,  # predicted_top[0].cpu().numpy(),
-                                        ps, args.num_selections)
+                                        stemmer_for_matching, args.num_selections)
 
             print('ssss------')
             print(ss)
