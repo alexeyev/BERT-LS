@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
 
 
 def eval_ss_scores(ss, labels):

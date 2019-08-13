@@ -1,5 +1,5 @@
-# coding: utf-8
-
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
 
 class InputFeatures(object):
     """A single set of features of data."""
